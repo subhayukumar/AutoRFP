@@ -10,3 +10,7 @@ uvicorn
 python-multipart
 openpyxl
 markitdown==0.0.1a3
+fuzzywuzzy==0.18.0
+PyYAML==6.0.2
+python-Levenshtein==0.26.1
+streamlit==1.41.1

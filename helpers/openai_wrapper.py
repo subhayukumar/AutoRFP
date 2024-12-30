@@ -1,8 +1,10 @@
+from typing import Dict, List
 import openai
 from config import API_KEY
 
 openai.api_key = API_KEY
-# print("api key is", openai.api_key)
+
+
 def get_chatgpt_response(prompt, model="gpt-3.5-turbo-16k", temperature=0.2, max_tokens=9000, n=1, seed: int = None):
     """
     Generates a response from ChatGPT based on the given prompt.
@@ -33,11 +35,13 @@ def get_chatgpt_response(prompt, model="gpt-3.5-turbo-16k", temperature=0.2, max
     return generated_response if generated_response else ''
 
 
-# prompt_text = "Create an architectural diagram for a secure login system."
-
-# response = get_chatgpt_response(prompt_text)
-
-# if response:
-#     print("response is",response)
-# else:
-#     print("No response generated.")
+def call_openai(messages: List[Dict[str, str]], model="gpt-3.5-turbo-16k", temperature=0.2, *args, **kwargs) -> str:
+    response = openai.ChatCompletion.create(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        n=1,
+        *args, 
+        **kwargs, 
+    )
+    return response['choices'][0]['message']['content'].strip()

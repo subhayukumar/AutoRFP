@@ -1,0 +1,57 @@
+### State of Work
+
+```
+{sow}
+```
+
+---
+
+You are a Software Architect working as a Project Manager. Based on the requirements outlined in the **State of Work (SOW)** provided above, create a detailed **MVP (Minimum Viable Product) project plan** in YAML format.
+
+**Instructions**:
+
+1. **Reference**: Use the **State of Work (SOW)** provided as the primary input to generate the project plan. This should include a breakdown of modules, and tasks that need to be developed.
+
+2. **Expertise Levels**: Assume that the team's expertise level is Intermediate, meaning you can use standard industry time estimates.
+
+3. **Estimation Guidelines**:  
+   - **Task Breakdown**: Break down the tasks into specific components:
+     - **Backend** (e.g., API creation, database schema design, CRUD operations, etc.)
+     - **Frontend** (e.g., UI wireframing, component creation, form validations, etc.)
+     - **AI Development** (e.g., dataset preparation, model training, integration, data analysis, etc.)
+     - Anything else if given
+   - **Precise Time Estimates**: Provide **precise time estimates** for each subtask, factoring in dependencies and complexity, adjusted for the experience level.
+
+4. **Task Granularity**:
+   - Break down modules into technical subtasks, such as:
+     - Database schema design
+     - API development (CRUD operations)
+     - UI/UX design
+     - AI model training and integration or other data related tasks
+     - Testing and debugging
+     - User feedback integration
+     - or anything else
+
+6. **Feature Prioritization**:
+   - Prioritize critical features for the **MVP** and include **all the mentioned tasks** from the SOW.
+   - Ensure that **no task is skipped**, even if it requires logical inference for categorization.
+
+7. **Missing Classification Handling**:
+   - If there are any tasks that are unclear in classification ({categories}), infer the appropriate classification based on the task description. Ensure **no task is skipped**.
+
+8. **Clarification of Time Estimates**:
+   - Provide estimates in hours, ensuring that estimates reflect the actual complexity of each task.
+   - Consider the experience level of the team when providing these estimates.
+
+### Deliverables
+
+- Provide a **YAML output** with all modules from the SOW, detailed tasks, and **time estimates** adjusted for average/intermediate expertise level.
+- Ensure **all tasks are covered** in the YAML, with no omissions.
+- The output should be suitable for direct use in project planning tools or spreadsheets.
+
+**VERY IMPORTANT**: **ONLY RESPOND WITH THE YAML FORMATTED OUTPUT.**
+
+### Output Format: Strictly follow the format. Enclose all strings in double quotes.
+```yaml
+{output_format}
+```
