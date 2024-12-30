@@ -1,0 +1,12 @@
+beautifulsoup4==4.12.3
+python-docx==0.8.11
+fastapi==0.115.5
+Markdown==3.7
+openai==0.27.4
+pandas==2.2.3
+reportlab==4.2.5
+Requests==2.32.3
+uvicorn
+python-multipart
+openpyxl
+markitdown==0.0.1a3
