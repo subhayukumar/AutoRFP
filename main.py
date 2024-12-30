@@ -1,8 +1,10 @@
 import os
 import streamlit as st
+from tempfile import NamedTemporaryFile
+
 from models.modules import Modules
 from helpers.utils import get_trace
-from tempfile import NamedTemporaryFile
+from config import STATIC_TOKEN as TOKEN
 
 st.set_page_config(
     page_title="AutoRFP",
@@ -10,8 +12,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# Define static Token
-TOKEN = "0bcf49a90e765ca3d7ea8ba1ae25373142e374c556919aa3e5c41adf8b2ff220"
 
 def check_token(token: str):
     return token == TOKEN
