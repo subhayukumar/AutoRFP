@@ -113,7 +113,7 @@ class Modules(BaseModel):
     @staticmethod
     def to_csv(df: pd.DataFrame, add_total_hours_row: bool = True) -> str:
         if add_total_hours_row:
-            df.loc[len(df)] = [f"Total: {x}" if isinstance(x, (float, int)) else "" for x in df.sum()]
+            df.loc[len(df)] = [x if isinstance(x, (float, int)) else "" for x in df.sum()]
         csv_text = df.to_csv(index=False, quoting=csv.QUOTE_NONNUMERIC)
         return csv_text
 
