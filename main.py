@@ -1,5 +1,4 @@
 import os
-import csv
 import streamlit as st
 from tempfile import NamedTemporaryFile
 
@@ -69,29 +68,36 @@ if is_valid_token:
             col1, col2, col3, col4 = st.columns(4, vertical_alignment="center")
 
             # Show the total hours for the entire project
-            col1.metric(label="Total Estimated Hours", value=df['Hours'].sum(), delta=None)
+            st.metric(label="Total Estimated Hours", value=df['Hours'].sum(), delta=None)
 
             # Let the user download in either JSON or YAML format
-            col2.download_button(
-                label="Download as JSON",
+            col1.download_button(
+                label="Download JSON",
                 data=json_data,
                 file_name=f"{modules.slug}.json",
                 mime="application/json",
                 key="download_json",
             )
-            col3.download_button(
-                label="Download as YAML",
+            col2.download_button(
+                label="Download YAML",
                 data=yaml_data,
                 file_name=f"{modules.slug}.yaml",
                 mime="text/yaml",
                 key="download_yaml",
             )
-            col4.download_button(
-                label="Download as CSV",
-                data=df.to_csv(index=False, quoting=csv.QUOTE_NONNUMERIC),
+            col3.download_button(
+                label="Download CSV",
+                data=Modules.to_csv(df, add_total_hours_row=True),
                 file_name=f"{modules.slug}.csv",
                 mime="text/csv",
                 key="download_csv",
+            )
+            col4.download_button(
+                label="Download Pivot CSV",
+                data=Modules.to_csv(pivot_df, add_total_hours_row=True),
+                file_name=f"{modules.slug}_pivot.csv",
+                mime="text/csv",
+                key="download_pivot_csv",
             )
 
             # Display the main DataFrame

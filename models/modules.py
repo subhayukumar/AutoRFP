@@ -1,3 +1,4 @@
+import csv
 from enum import Enum
 from typing import List
 
@@ -108,6 +109,13 @@ class Modules(BaseModel):
         pivot = pivot.reset_index()
 
         return pivot
+    
+    @staticmethod
+    def to_csv(df: pd.DataFrame, add_total_hours_row: bool = True) -> str:
+        if add_total_hours_row:
+            df.loc[len(df)] = [f"Total: {x}" if isinstance(x, (float, int)) else "" for x in df.sum()]
+        csv_text = df.to_csv(index=False, quoting=csv.QUOTE_NONNUMERIC)
+        return csv_text
 
     def to_df(self, title_cased: bool = False, pivot_by_categories: bool = False):
         df = pd.DataFrame(
