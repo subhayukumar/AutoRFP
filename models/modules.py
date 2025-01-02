@@ -21,7 +21,7 @@ class TaskCategory(str, Enum):
 
 
 class TaskCategoryModel(BaseModel):
-    category: TaskCategory = f"Can be one of {TaskCategory.comma_separated()}"
+    category: TaskCategory | str = f"Can be one of {TaskCategory.comma_separated()}"
     hours: float = Field(
         "Estimated amount of hours required. Must be an int or float", gt=0
     )
