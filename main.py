@@ -1,4 +1,5 @@
 import os
+import csv
 import streamlit as st
 from tempfile import NamedTemporaryFile
 
@@ -65,7 +66,7 @@ if is_valid_token:
             df = modules.to_df(title_cased=True)
             pivot_df = modules.to_df(pivot_by_categories=True, title_cased=True)
 
-            col1, col2, col3 = st.columns(3, vertical_alignment="center")
+            col1, col2, col3, col4 = st.columns(4, vertical_alignment="center")
 
             # Show the total hours for the entire project
             col1.metric(label="Total Estimated Hours", value=df['Hours'].sum(), delta=None)
@@ -84,6 +85,13 @@ if is_valid_token:
                 file_name=f"{modules.slug}.yaml",
                 mime="text/yaml",
                 key="download_yaml",
+            )
+            col4.download_button(
+                label="Download as CSV",
+                data=df.to_csv(index=False, quoting=csv.QUOTE_NONNUMERIC),
+                file_name=f"{modules.slug}.csv",
+                mime="text/csv",
+                key="download_csv",
             )
 
             # Display the main DataFrame
