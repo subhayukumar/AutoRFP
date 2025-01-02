@@ -7,7 +7,7 @@ from pydantic import Field
 from models.basemodel import BaseModel
 from helpers.openai_wrapper import call_openai
 from helpers.text_utils import read_prompt, slugify, snake_to_title
-from helpers.readers import read_docx, read_excel, read_mp3, read_pdf
+from helpers.readers import read_docx, read_excel, read_mp3, read_pdf, read_wav
 
 
 class TaskCategory(str, Enum):
@@ -77,6 +77,10 @@ class Modules(BaseModel):
     @classmethod
     def from_mp3(cls, mp3_path: str):
         return cls.from_sow(read_mp3(mp3_path))
+    
+    @classmethod
+    def from_wav(cls, wav_path: str):
+        return cls.from_sow(read_wav(wav_path))
 
     @staticmethod
     def pivot_df_by_categories(df: pd.DataFrame):

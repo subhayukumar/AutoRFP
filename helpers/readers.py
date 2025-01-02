@@ -20,3 +20,8 @@ def read_mp3(file_path: str):
     if not file_path.endswith('.mp3'):
         raise ValueError("File is not an MP3")
     return MarkItDown().convert(file_path).text_content
+
+def read_wav(file_path: str):
+    if not file_path.endswith('.wav'):
+        raise ValueError("File is not an WAV")
+    return MarkItDown().convert(file_path).text_content

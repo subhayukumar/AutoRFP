@@ -23,10 +23,10 @@ is_valid_token = check_token(token_input)
 
 # Only proceed if login is successful
 if is_valid_token:
-    st.markdown("Upload a PDF, DOCX, XLSX, or MP3 file to analyze tasks, categories, and estimated hours. Or you can provide a previously generated YAML or JSON file.")
+    st.markdown("Upload a PDF, DOCX, XLSX, WAV, or MP3 file to analyze tasks, categories, and estimated hours. Or you can provide a previously generated YAML or JSON file.")
 
     # File upload
-    uploaded_file = st.file_uploader("Upload a file", type=["pdf", "docx", "xlsx", "mp3", "yml", "yaml", "json"])
+    uploaded_file = st.file_uploader("Upload a file", type=["pdf", "docx", "xlsx", "mp3", "wav", "yaml", "json"])
 
     # Caching the modules generation
     @st.cache_data
@@ -39,6 +39,8 @@ if is_valid_token:
             return Modules.from_excel(file_path)
         elif file_extension == ".mp3":
             return Modules.from_mp3(file_path)
+        elif file_extension == ".wav":
+            return Modules.from_wav(file_path)
         elif file_extension in [".yml", ".yaml", ".json"]:
             return Modules.from_file(file_path)
         else:
