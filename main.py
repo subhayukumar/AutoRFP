@@ -30,21 +30,8 @@ if is_valid_token:
 
     # Caching the modules generation
     @st.cache_data
-    def generate_modules(file_path, file_extension):
-        if file_extension == ".pdf":
-            return Modules.from_pdf(file_path)
-        elif file_extension == ".docx":
-            return Modules.from_docx(file_path)
-        elif file_extension == ".xlsx":
-            return Modules.from_excel(file_path)
-        elif file_extension == ".mp3":
-            return Modules.from_mp3(file_path)
-        elif file_extension == ".wav":
-            return Modules.from_wav(file_path)
-        elif file_extension in [".yml", ".yaml", ".json"]:
-            return Modules.from_file(file_path)
-        else:
-            raise ValueError("Unsupported file format!")
+    def generate_modules(file_path: str):
+        return Modules.from_file(file_path)
 
     # Display results upon file upload
     if uploaded_file:
@@ -53,11 +40,8 @@ if is_valid_token:
                 temp_file.write(uploaded_file.read())
                 temp_path = temp_file.name
 
-            # Determine the file extension
-            file_extension = f".{uploaded_file.name.split('.')[-1]}"
-
             # Generate modules using the cached function
-            modules = generate_modules(temp_path, file_extension)
+            modules = generate_modules(temp_path)
             json_data = modules.to_json()
             yaml_data = modules.to_yaml()
 

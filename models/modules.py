@@ -5,6 +5,7 @@ from typing import List
 import pandas as pd
 from pydantic import Field
 
+from helpers.utils import hash_uuid
 from models.basemodel import BaseModel
 from helpers.openai_wrapper import call_openai
 from helpers.text_utils import read_prompt, slugify, snake_to_title
@@ -36,10 +37,26 @@ class TaskModel(BaseModel):
         TaskCategoryModel(category=c.value) for c in TaskCategory
     ]
 
+    @property
+    def hours(self):
+        return sum([c.hours for c in self.categories])
+    
+    @property
+    def subtasks(self):
+        return len(self.categories)
+
 
 class ModuleModel(BaseModel):
     module: str = "Name of the bigger module which the tasks are a part of."
     tasks: List[TaskModel] = [TaskModel()]
+    
+    @property
+    def hours(self):
+        return sum([t.hours for t in self.tasks])
+    
+    @property
+    def subtasks(self):
+        return sum([t.subtasks for t in self.tasks])
 
 
 class Modules(BaseModel):
@@ -49,9 +66,37 @@ class Modules(BaseModel):
     @property
     def slug(self):
         return slugify(self.project_name)
+    
+    @property
+    def hours(self):
+        return sum([m.hours for m in self.modules])
+    
+    @property
+    def subtasks(self):
+        return sum([m.subtasks for m in self.modules])
 
     @classmethod
-    def from_sow(cls, sow: str):
+    def from_sow(cls, sow: str, best_of: int = 3, regenerate: bool = False):
+        """
+        Creates a Modules object from a Statement of Work (SOW) string.
+
+        Args:
+            sow (str): The SOW string.
+            best_of (int): The number of best responses to consider. Defaults to 3.
+            regenerate (bool): If True, the object will be regenerated even if it already exists in the cache. Defaults to False.
+
+        Returns:
+            Modules: The Modules object created from the SOW string.
+        """
+        sow_hash = hash_uuid(sow)
+        
+        # Try to load the object from the cache
+        if not regenerate:
+            obj = cls.load_from_cache(key=sow_hash, return_as_dict=False)
+            if obj and isinstance(obj, cls):
+                return obj
+        
+        # Generate the prompt for the AI
         prompt = read_prompt(
             "user",
             {
@@ -60,28 +105,65 @@ class Modules(BaseModel):
                 "output_format": Modules().to_yaml(),
             },
         )
-        resp = call_openai(messages=[{"role": "user", "content": prompt}], model="gpt-4o")
-        return cls.from_yaml(resp)
-
-    @classmethod
-    def from_pdf(cls, pdf_path: str):
-        return cls.from_sow(read_pdf(pdf_path))
-
-    @classmethod
-    def from_docx(cls, docx_path: str):
-        return cls.from_sow(read_docx(docx_path))
+        
+        # Ask the AI to generate responses
+        responses = call_openai(
+            messages=[{"role": "user", "content": prompt}], 
+            model="gpt-4o", 
+            temperature=0.2, 
+            n=best_of, 
+        )
+        
+        # Parse the responses and create Modules objects
+        objects = sorted(
+            [cls.from_yaml(resp) for resp in responses], 
+            key=lambda x: (x.subtasks, x.hours), 
+            reverse=True, 
+        )
+        
+        # Take the best response and save it to the cache
+        obj = objects[0]
+        obj.save_to_cache(key=sow_hash, background=True)
+        
+        return obj
     
     @classmethod
-    def from_excel(cls, excel_path: str):
-        return cls.from_sow(read_excel(excel_path))
+    def from_file(cls, path: str, best_of: int = 3, regenerate: bool = False):
+        """
+        Creates a Modules object from a file.
 
-    @classmethod
-    def from_mp3(cls, mp3_path: str):
-        return cls.from_sow(read_mp3(mp3_path))
-    
-    @classmethod
-    def from_wav(cls, wav_path: str):
-        return cls.from_sow(read_wav(wav_path))
+        This method supports various file formats, including PDF, DOCX, XLSX, MP3, WAV, YAML, and JSON.
+        It reads the content of the file, processes it, and returns a Modules object based on the file's data.
+
+        Args:
+            path (str): The path to the file to be processed.
+            best_of (int, optional): The number of best responses to consider when generating
+                the Modules object. Defaults to 3.
+            regenerate (bool, optional): If True, the object will be regenerated even if it
+                already exists in the cache. Defaults to False.
+
+        Returns:
+            Modules: The Modules object created from the file data.
+
+        Raises:
+            ValueError: If the file format is unsupported.
+        """
+        ext = path.split(".")[-1]
+        if ext == "pdf":
+            data = read_pdf(path)
+        elif ext == "docx":
+            data = read_docx(path)
+        elif ext == "xlsx":
+            data = read_excel(path)
+        elif ext == "mp3":
+            data = read_mp3(path)
+        elif ext == "wav":
+            data = read_wav(path)
+        elif ext in [".yml", ".yaml", ".json"]:
+            return super().from_file(path)
+        else:
+            raise ValueError("Unsupported file format!")
+        return cls.from_sow(data, best_of, regenerate)
 
     @staticmethod
     def pivot_df_by_categories(df: pd.DataFrame):
