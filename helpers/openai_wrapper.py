@@ -35,13 +35,13 @@ def get_chatgpt_response(prompt, model="gpt-3.5-turbo-16k", temperature=0.2, max
     return generated_response if generated_response else ''
 
 
-def call_openai(messages: List[Dict[str, str]], model="gpt-3.5-turbo-16k", temperature=0.2, *args, **kwargs) -> str:
+def call_openai(messages: List[Dict[str, str]], model="gpt-3.5-turbo-16k", temperature=0.2, n=1, *args, **kwargs) -> List[str]:
     response = openai.ChatCompletion.create(
         model=model,
         messages=messages,
         temperature=temperature,
-        n=1,
+        n=n,
         *args, 
         **kwargs, 
     )
-    return response['choices'][0]['message']['content'].strip()
+    return [x['message']['content'].strip() for x in response['choices']]

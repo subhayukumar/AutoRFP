@@ -62,6 +62,7 @@ Usage Examples:
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Any, Literal
 
@@ -69,6 +70,7 @@ import yaml
 from pydantic.main import IncEx
 from pydantic import BaseModel as PydanticBaseModel
 
+from helpers import cache_utils as cas
 from helpers.utils import clean_yaml_str, clean_json_str, find_best_match, run_in_background
 
 
@@ -400,3 +402,83 @@ class BaseModel(PydanticBaseModel):
         if not isinstance(other, BaseModel):
             return False
         return self.to_yaml() == other.to_yaml()
+
+    @classmethod
+    def load_from_cache(cls, key: str, collection: str = None, get_expired: bool = False, return_as_dict: bool = False):
+        """
+        Load a model from cache by key.
+
+        Args:
+            key (str): The key to load from cache.
+            collection (str, optional): The name of the collection to load from. Defaults to the name of the class.
+            get_expired (bool, optional): Whether to get expired objects. Defaults to False.
+            return_as_dict (bool, optional): Whether to return the loaded model as a dictionary. Defaults to False.
+
+        Returns:
+            The loaded model or None if not found in cache.
+        """
+        collection = collection or cls.__name__
+        data = cas.load(key, collection, get_expired=get_expired)
+        if data is None:
+            return None
+        if return_as_dict:
+            return data
+        try:
+            obj = cls(**data)
+        except Exception as e:
+            logging.error(f"Failed to load {collection!r} for class {cls.__name__} from cache for key {key!r}: {e}")
+            return None
+        obj.__is_cached__ = True
+        return obj
+    
+    def save_to_cache(self, key: str, expire_after_seconds: int | None = 3600 * 24 * 90, collection: str = None, background: bool = False):
+        """
+        Save a model to cache by key.
+
+        Args:
+            key (str): The key to save to cache.
+            expire_after_seconds (int, optional): The expiry time in seconds since cached time. Defaults to 3600 * 24 * 90 (90 days).
+                If None, the object will never expire.
+            collection (str, optional): The name of the collection to save to.
+                Defaults to the name of the class.
+            background (bool, optional): Whether to save in the background. Defaults to False.
+                If background is True, the save will be run in a separate thread and not block the main thread. **This might not give errors.**
+        """
+        collection = collection or self.__class__.__name__
+        if background:
+            run_in_background(cas.save, key, collection, self.to_dict(), expire_after_seconds=expire_after_seconds)
+        else:
+            cas.save(key, collection, self.to_dict(), expire_after_seconds=expire_after_seconds)
+
+    @classmethod
+    def delete_from_cache(cls, key: str, collection: str = None):
+        """
+        Delete a model from cache by key.
+
+        Args:
+            key (str): The key to delete from cache.
+            collection (str, optional): The name of the collection to delete from.
+                Defaults to the name of the class.
+                
+        Returns:
+            bool: True if the key was deleted, False otherwise.
+        """
+        collection = collection or cls.__name__
+        return cas.delete(key, collection)
+
+    @classmethod
+    def query_from_cache(cls, query: dict, collection: str = None):
+        """
+        Query the cache for the given query dict and return a list of objects
+        of this class.
+
+        Args:
+            query (dict): The query dict to search the cache with.
+            collection (str, optional): The name of the collection to query.
+                Defaults to the name of the class.
+
+        Returns:
+            List[BaseModel]: A list of objects of this class that match the query.
+        """
+        collection = collection or cls.__name__
+        return [cls(**d) for d in cas.query(query, collection)]
