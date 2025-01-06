@@ -88,7 +88,7 @@ class Modules(BaseModel):
         Returns:
             Modules: The Modules object created from the SOW string.
         """
-        sow_hash = hash_uuid(sow)
+        sow_hash = hash_uuid(sow).hex
         
         # Try to load the object from the cache
         if not regenerate:
@@ -159,7 +159,7 @@ class Modules(BaseModel):
             data = read_mp3(path)
         elif ext == "wav":
             data = read_wav(path)
-        elif ext in [".yml", ".yaml", ".json"]:
+        elif ext in ["yml", "yaml", "json"]:
             return super().from_file(path)
         else:
             raise ValueError("Unsupported file format!")
@@ -194,6 +194,7 @@ class Modules(BaseModel):
     
     @staticmethod
     def to_csv(df: pd.DataFrame, add_total_hours_row: bool = True) -> str:
+        df = df.copy()
         if add_total_hours_row:
             df.loc[len(df)] = [x if isinstance(x, (float, int)) else "" for x in df.sum()]
         csv_text = df.to_csv(index=False, quoting=csv.QUOTE_NONNUMERIC)
