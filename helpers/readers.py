@@ -25,3 +25,9 @@ def read_wav(file_path: str):
     if not file_path.endswith('.wav'):
         raise ValueError("File is not an WAV")
     return MarkItDown().convert(file_path).text_content
+
+def read_text(file_path: str):
+    if file_path.split(".")[-1] not in ["txt", "md"]:
+        raise ValueError("File is not a text file")
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()

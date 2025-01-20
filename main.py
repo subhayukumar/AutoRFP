@@ -23,15 +23,18 @@ is_valid_token = check_token(token_input)
 
 # Only proceed if login is successful
 if is_valid_token:
-    st.markdown("Upload a PDF, DOCX, XLSX, WAV, or MP3 file to analyze tasks, categories, and estimated hours. Or you can provide a previously generated YAML or JSON file.")
+    st.markdown("Upload a TXT, MD, PDF, DOCX, XLSX, WAV, or MP3 file to analyze tasks, categories, and estimated hours. Or you can provide a previously generated YAML or JSON file.")
 
     # File upload
-    uploaded_file = st.file_uploader("Upload a file", type=["pdf", "docx", "xlsx", "mp3", "wav", "yaml", "json"])
+    uploaded_file = st.file_uploader("Upload a file", type=["txt", "md", "pdf", "docx", "xlsx", "mp3", "wav", "yaml", "json"])
+    
+    # Add a checkbox to indicate regeneration
+    regenerate = st.checkbox("Regenerate (if already exists)", value=False)
 
     # Caching the modules generation
     @st.cache_data
-    def generate_modules(file_path: str):
-        return Modules.from_file(file_path)
+    def generate_modules(file_path: str, _regenerate: bool):
+        return Modules.from_file(file_path, regenerate=_regenerate)
 
     # Display results upon file upload
     if uploaded_file:
@@ -41,7 +44,7 @@ if is_valid_token:
                 temp_path = temp_file.name
 
             # Generate modules using the cached function
-            modules = generate_modules(temp_path)
+            modules = generate_modules(temp_path, regenerate)
             json_data = modules.to_json()
             yaml_data = modules.to_yaml()
 

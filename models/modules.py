@@ -9,7 +9,14 @@ from helpers.utils import hash_uuid
 from models.basemodel import BaseModel
 from helpers.openai_wrapper import call_openai
 from helpers.text_utils import read_prompt, slugify, snake_to_title
-from helpers.readers import read_docx, read_excel, read_mp3, read_pdf, read_wav
+from helpers.readers import (
+    read_docx,
+    read_excel,
+    read_mp3,
+    read_pdf,
+    read_wav,
+    read_text,
+)
 
 
 class TaskCategory(str, Enum):
@@ -25,7 +32,7 @@ class TaskCategory(str, Enum):
 class TaskCategoryModel(BaseModel):
     category: TaskCategory | str = f"Can be one of {TaskCategory.comma_separated()}"
     hours: float = Field(
-        "Estimated amount of hours required. Must be an int or float", ge=0
+        "Estimated amount of hours required. Must be an int or float greater than 0", ge=0
     )
     subtask: str = "Short description of the task"
 
@@ -159,6 +166,8 @@ class Modules(BaseModel):
             data = read_mp3(path)
         elif ext == "wav":
             data = read_wav(path)
+        elif ext in ["txt", "md"]:
+            data = read_text(path)
         elif ext in ["yml", "yaml", "json"]:
             return super().from_file(path)
         else:
