@@ -1,12 +1,15 @@
 import csv
+import json
 from enum import Enum
 from typing import List
 
 import pandas as pd
 from pydantic import Field
+import plotly.graph_objects as go
 
 from helpers.utils import hash_uuid
 from models.basemodel import BaseModel
+from config import SANKEY_TEMPLATE_PATH
 from helpers.openai_wrapper import call_openai
 from helpers.text_utils import read_prompt, slugify, snake_to_title
 from helpers.readers import (
@@ -35,6 +38,7 @@ class TaskCategoryModel(BaseModel):
         "Estimated amount of hours required. Must be an int or float greater than 0", ge=0
     )
     subtask: str = "Short description of the task"
+    short_name: str = "A very short name for the subtask (2-4 words). Must be unique."
 
 
 class TaskModel(BaseModel):
@@ -43,6 +47,7 @@ class TaskModel(BaseModel):
     categories: List[TaskCategoryModel] = [
         TaskCategoryModel(category=c.value) for c in TaskCategory
     ]
+    short_name: str = "A very short name for the task (2-4 words). Must be unique."
 
     @property
     def hours(self):
@@ -55,6 +60,7 @@ class TaskModel(BaseModel):
 
 class ModuleModel(BaseModel):
     module: str = "Name of the bigger module which the tasks are a part of."
+    short_name: str = "A very short name for the module (2-4 words). Must be unique."
     tasks: List[TaskModel] = [TaskModel()]
     
     @property
@@ -227,6 +233,90 @@ class Modules(BaseModel):
         if title_cased:
             df.columns = map(snake_to_title, df.columns)
         return df
+    
+    def to_plotly_fig(self):
+        df = pd.DataFrame([
+            {
+                "project": self.project_name,
+                "module": module.short_name,
+                "task": task.short_name,
+                # "category": str(category.category),
+                "subtask": category.short_name,
+                "hours": category.hours,
+            }
+            for module in self.modules
+            for task in module.tasks
+            for category in task.categories
+        ])
+
+
+        dims = [
+            go.parcats.Dimension(values=df[x], label=x.title())
+            for x in df.columns
+            if df[x].dtype == pd.StringDtype
+        ]
+
+        fig = go.Figure(
+            go.Parcats(
+                dimensions=dims,
+                counts=df["hours"],
+                line=go.parcats.Line(
+                    color=df["module"].astype("category").cat.codes,
+                    shape="hspline",
+                ),
+                hoveron="color",
+                hoverinfo="count",
+                labelfont=go.parcats.Labelfont(size=13),
+                tickfont=go.parcats.Tickfont(),
+                arrangement="freeform",
+            )
+        )
+        return fig
+    
+    def to_sankey_html(self):
+        if not SANKEY_TEMPLATE_PATH.exists():
+            return ""
+        
+        df = pd.DataFrame([
+            {
+                "project": "P."+self.project_name,
+                "module": "M."+module.short_name,
+                "task": "T."+task.short_name,
+                "subtask": "ST."+category.short_name,
+                "hours": category.hours,
+            }
+            for module in self.modules
+            for task in module.tasks
+            for category in task.categories
+        ])
+        pm_df = (
+            df.groupby(["project", "module"])
+            .agg({"hours": "sum"})
+            .reset_index()
+            .rename(columns={"project": "from", "module": "to", "hours": "value"})
+        )
+        mt_df = (
+            df.groupby(["module", "task"])
+            .agg({"hours": "sum"})
+            .reset_index()
+            .rename(columns={"module": "from", "task": "to", "hours": "value"})
+        )
+        ts_df = (
+            df.groupby(["task", "subtask"])
+            .agg({"hours": "sum"})
+            .reset_index()
+            .rename(columns={"task": "from", "subtask": "to", "hours": "value"})
+        )
+
+        three_col_df = pd.concat([
+            pm_df,
+            mt_df,
+            ts_df,
+        ])
+        sankey_data = three_col_df.to_dict(orient="records")
+        html = SANKEY_TEMPLATE_PATH.read_text(encoding="utf-8")
+        html = html.replace("{{SANKEY_JSON}}", json.dumps(sankey_data))
+        return html
 
     def __hash__(self):
         return hash(self.to_yaml())

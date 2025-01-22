@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,3 +10,5 @@ STATIC_TOKEN = os.getenv("STATIC_TOKEN")
 
 MONGO_CLUSTER_URI = os.getenv("MONGO_CLUSTER_URI")
 MONGO_DATABASE = os.getenv("MONGO_DATABASE", "AutoRFP")
+
+SANKEY_TEMPLATE_PATH = Path("templates/sankey.html")

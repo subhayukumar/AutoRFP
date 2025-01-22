@@ -6,7 +6,6 @@ from models.modules import Modules
 from helpers.utils import get_trace
 from config import STATIC_TOKEN as TOKEN
 
-
 st.set_page_config(
     page_title="AutoRFP",
     page_icon="fft-logo.jpg",
@@ -87,6 +86,10 @@ if is_valid_token:
                 key="download_pivot_csv",
             )
 
+            # Display the Sankey diagram
+            with st.expander("Sankey Diagram", expanded=True):
+                st.plotly_chart(modules.to_plotly_fig())
+            
             # Display the main DataFrame
             with st.expander("Detailed Task Breakdown", expanded=True):
                 st.dataframe(df)
@@ -94,25 +97,6 @@ if is_valid_token:
             # Display the pivoted DataFrame
             with st.expander("Pivoted Task View by Categories", expanded=True):
                 st.dataframe(pivot_df)
-
-            # Calculate and display aggregated totals by selected columns
-            grouping_columns = [
-                "Module", 
-                "Task", 
-                "Category", 
-            ]
-            selected_columns = st.multiselect(
-                "Select columns to group by",
-                options=grouping_columns,
-                default=["Category"],
-            )
-
-            columns = st.columns(len(selected_columns))
-            for i, column in enumerate(columns):
-                with column:
-                    total_hours = df.groupby(selected_columns[i])["Hours"].sum()
-                    column.subheader(f"Total Hours by {selected_columns[i]}")
-                    column.bar_chart(total_hours)
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
